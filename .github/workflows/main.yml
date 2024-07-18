@@ -26,7 +26,7 @@ jobs:
         pip install -r requirements.txt  # Jika ada file requirements.txt
 
     - name: Run Python script
-      run: python script.py  # Ganti dengan nama skrip Python yang ingin Anda jalankan
+      run: python guthub.py  # Ganti dengan nama skrip Python yang ingin Anda jalankan
 
     - name: Print Success Message
       run: echo "Workflow has been executed successfully!"
