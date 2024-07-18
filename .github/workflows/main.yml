@@ -1,3 +1,36 @@
+name: Run Python Script
+
+on:
+  push:
+    branches:
+      - main  # Ubah sesuai dengan nama branch yang sesuai
+
+jobs:
+  run-python-script:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # Ganti dengan versi Python yang sesuai
+
+    - name: Print Python Version
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # Jika ada file requirements.txt
+
+    - name: Run Python script
+      run: python script.py  # Ganti dengan nama skrip Python yang ingin Anda jalankan
+
+    - name: Print Success Message
+      run: echo "Workflow has been executed successfully!"
+
 name: Cl
 
 on: [push, workflow_dispatch]
