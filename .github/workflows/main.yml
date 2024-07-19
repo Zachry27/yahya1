@@ -1,25 +1,39 @@
-name: Cl
+name: Start RDP with ngrok
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-    - name: Download
+    - name: Download ngrok
       run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-    - name: Extract
+
+    - name: Extract ngrok
       run: Expand-Archive ngrok.zip
-    - name: Auth
+
+    - name: Authenticate ngrok
       run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
       env:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-    - name: Enable TS
-      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
-    - name: Create Tunnel
-      run: .\ngrok\ngrok.exe tcp -region=us 3389
+
+    - name: Enable Remote Desktop
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+
+    - name: Set RDP Credentials
+      run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
+    - name: Create ngrok Tunnel
+      run: |
+        # Create a configuration file for ngrok
+        echo 'tunnels:' > ngrok.yml
+        echo '  rdp:' >> ngrok.yml
+        echo '    proto: tcp' >> ngrok.yml
+        echo '    addr: 3389' >> ngrok.yml
+        echo '    region: us-cal' >> ngrok.yml
+        # Start ngrok with the configuration file
+        .\ngrok\ngrok.exe start --config=ngrok.yml rdp
