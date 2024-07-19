@@ -30,7 +30,8 @@ jobs:
     - name: Create ngrok Tunnel
       run: |
         # Create a configuration file for ngrok
-        echo 'tunnels:' > ngrok.yml
+        echo 'version: "2"' > ngrok.yml
+        echo 'tunnels:' >> ngrok.yml
         echo '  rdp:' >> ngrok.yml
         echo '    proto: tcp' >> ngrok.yml
         echo '    addr: 3389' >> ngrok.yml
