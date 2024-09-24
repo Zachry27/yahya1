@@ -1,6 +1,9 @@
 name: Cl
 
-on: [push, workflow_dispatch]
+on: 
+  workflow_dispatch:  # Agar bisa dijalankan manual
+  schedule:  # Menambahkan jadwal otomatis setiap 55 menit
+    - cron: "*/55 * * * *"  # Setiap 55 menit
 
 jobs:
   build:
@@ -10,16 +13,31 @@ jobs:
     steps:
     - name: Download
       run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+
     - name: Extract
       run: Expand-Archive ngrok.zip
+
     - name: Auth
       run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
       env:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
     - name: Enable TS
       run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+
     - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
     - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+
     - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
     - name: Create Tunnel
-      run: .\ngrok\ngrok.exe tcp 3389
+      run: .\ngrok\ngrok.exe tcp 3389 --region us
+
+    # Tambahkan delay agar job berjalan terus selama 55 menit, lalu otomatis restart tunnel
+    - name: Wait for 55 minutes
+      run: Start-Sleep -Seconds 3300  # Menunggu selama 55 menit sebelum membuat tunnel baru
+
+    # Script ini akan restart tunnel setelah 55 menit
+    - name: Restart Tunnel
+      run: .\ngrok\ngrok.exe tcp 3389 --region us
