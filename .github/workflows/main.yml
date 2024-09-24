@@ -1,9 +1,6 @@
 name: Cl
 
-on: 
-  workflow_dispatch:  # Agar bisa dijalankan manual
-  schedule:  # Menambahkan jadwal otomatis setiap 55 menit
-    - cron: "*/55 * * * *"  # Setiap 55 menit
+on: [push, workflow_dispatch]
 
 jobs:
   build:
@@ -31,13 +28,5 @@ jobs:
 
     - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
 
-    - name: Create Tunnel
-      run: .\ngrok\ngrok.exe tcp 3389 --region us
-
-    # Tambahkan delay agar job berjalan terus selama 55 menit, lalu otomatis restart tunnel
-    - name: Wait for 55 minutes
-      run: Start-Sleep -Seconds 3300  # Menunggu selama 55 menit sebelum membuat tunnel baru
-
-    # Script ini akan restart tunnel setelah 55 menit
-    - name: Restart Tunnel
-      run: .\ngrok\ngrok.exe tcp 3389 --region us
+    - name: Create Tunnel with US Server
+      run: .\ngrok\ngrok.exe tcp 3389 --region us  # Menambahkan opsi region untuk server US
