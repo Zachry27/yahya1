@@ -29,4 +29,7 @@ jobs:
     - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
 
     - name: Create Tunnel with US Server
-      run: .\ngrok\ngrok.exe tcp 3389 --region us  # Menambahkan opsi region untuk server US
+      run: .\ngrok\ngrok.exe tcp 3389 --region us
+
+    - name: Debug Ngrok Output
+      run: .\ngrok\ngrok.exe status
