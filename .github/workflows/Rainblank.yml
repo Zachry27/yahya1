@@ -1,0 +1,51 @@
+name: RainFlow Remote Worker
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Download Ngrok
+      run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+
+    - name: Extract Ngrok
+      run: Expand-Archive ngrok.zip
+
+    - name: Auth Ngrok
+      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
+    - name: Enable Remote Desktop (RDP)
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+
+    - name: Set RDP Password
+      run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "Bismillah2025" -Force)
+
+    - name: Setup Node.js & FFmpeg for Remote Worker
+      run: |
+        Write-Host "Downloading FFmpeg..."
+        Invoke-WebRequest https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip -OutFile ffmpeg.zip
+        Expand-Archive ffmpeg.zip -DestinationPath C:\ffmpeg
+        
+        # Tambahkan FFmpeg ke Path agar bisa dipanggil script
+        $ffmpegPath = "C:\ffmpeg\ffmpeg-master-latest-win64-gpl\bin"
+        [System.Environment]::SetEnvironmentVariable("Path", $env:Path + ";" + $ffmpegPath, [System.EnvironmentVariableTarget]::Machine)
+        $env:Path += ";" + $ffmpegPath
+        
+        Write-Host "Downloading Worker Script from VPS..."
+        Invoke-WebRequest http://141.11.198.81:3000/worker.js -OutFile worker.js
+
+    - name: Run Remote Worker & Ngrok Background
+      run: |
+        Write-Host "Starting Ngrok tunnel for RDP..."
+        Start-Process -FilePath ".\ngrok\ngrok.exe" -ArgumentList "tcp 3389" -NoNewWindow
+        
+        Write-Host "Worker is now listening for tasks from VPS..."
+        # Menjalankan worker.js dan menghubungkannya ke IP VPS Anda
+        node worker.js http://141.11.198.81:3000
